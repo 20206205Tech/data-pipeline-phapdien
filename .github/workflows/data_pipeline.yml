@@ -29,21 +29,11 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Cache Scrapy HTTP Cache
-        uses: actions/cache@v4
-        with:
-          path: .scrapy
-          key: ${{ runner.os }}-scrapy-cache-${{ github.workflow }}
-          restore-keys: |
-            ${{ runner.os }}-scrapy-cache-
-
-
       - name: step_download_zip
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
           doppler run -p 20206205tech -c prd -- uv run python step_download_zip.py
-
 
       - name: step_extract_json
         env:
