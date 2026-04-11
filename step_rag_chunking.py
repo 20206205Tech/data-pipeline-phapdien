@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -88,11 +89,9 @@ def parse_html_to_data(html_path, df_tree, chude_dict, demuc_dict):
                 "ten": str(row.get("TEN", "")),
                 "mapc": str(row["MAPC"]),
                 "chu_de_id": chu_de_id,
-                "ten_chu_de": chude_dict.get(chu_de_id, ""),  # Lấy Tên Chủ Đề từ Dict
+                "ten_chu_de": chude_dict.get(chu_de_id, ""),
                 "de_muc_id": de_muc_id_val,
-                "ten_de_muc": demuc_dict.get(
-                    de_muc_id_val, ""
-                ),  # Lấy Tên Đề Mục từ Dict
+                "ten_de_muc": demuc_dict.get(de_muc_id_val, ""),
                 "content_html_clean": "\n".join(content_buffer),
             }
         )
@@ -151,18 +150,24 @@ def main():
             config_by_path.PATH_FOLDER_OUTPUT, f"{de_muc_id}.json"
         )
 
-        # Lọc theo DeMucID (Key trong JSON)
         df_tree_demuc = df_all_tree[df_all_tree["DeMucID"] == de_muc_id].copy()
 
         if df_tree_demuc.empty:
-            # Chỉ đếm số dòng khi xảy ra lỗi để tối ưu tốc độ
             with open(local_path, "r", encoding="utf-8") as f:
                 line_count = sum(1 for _ in f)
 
-            logger.warning(
-                f"⚠️ Không tìm thấy dữ liệu cây cho DeMuc: {de_muc_id} (File HTML có {line_count} dòng)"
-            )
+            if line_count == 7:
+                logger.error(
+                    f"File HTML {file_name} bị hỏng (chỉ có {line_count} dòng)."
+                )
+
+                sys.exit(1)
+            else:
+                logger.warning(
+                    f"⚠️ Không tìm thấy dữ liệu cây cho: {de_muc_id} (File HTML có {line_count} dòng)"
+                )
             continue
+
         df_tree_demuc = df_tree_demuc.sort_values(by="MAPC", ascending=True)
 
         is_changed, _ = sync_local_file_to_drive(
