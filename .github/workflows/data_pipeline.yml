@@ -45,11 +45,11 @@ jobs:
           doppler run -p 20206205tech -c prd -- uv run python step_download_zip.py
 
 
-      - name: step_extract_and_load_json
+      - name: step_extract_json
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          doppler run -p 20206205tech -c prd -- uv run python step_extract_and_load_json.py
+          doppler run -p 20206205tech -c prd -- uv run python step_extract_json.py
 
       - name: step_rag_chunking
         env:
