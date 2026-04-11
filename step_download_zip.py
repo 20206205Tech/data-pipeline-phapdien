@@ -4,7 +4,6 @@ import zipfile
 
 import requests
 from loguru import logger
-from tqdm import tqdm
 
 import env
 from utils.config_by_path import ConfigByPath
@@ -21,18 +20,13 @@ def download_file(url, dest_path):
     logger.info(f"🚀 Đang tải file từ: {url}")
     response = requests.get(url, stream=True, timeout=60)
     response.raise_for_status()
-    total_size = int(response.headers.get("content-length", 0))
-    with open(dest_path, "wb") as f, tqdm(
-        desc=f"Downloading {os.path.basename(dest_path)}",
-        total=total_size,
-        unit="iB",
-        unit_scale=True,
-        unit_divisor=1024,
-    ) as bar:
+
+    # Ghi file theo từng chunk nhỏ để tối ưu bộ nhớ
+    with open(dest_path, "wb") as f:
         for chunk in response.iter_content(chunk_size=8192):
             if chunk:
-                size = f.write(chunk)
-                bar.update(size)
+                f.write(chunk)
+
     logger.success(f"✅ Tải xong: {dest_path}")
 
 
