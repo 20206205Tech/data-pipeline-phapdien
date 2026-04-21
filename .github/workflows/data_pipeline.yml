@@ -33,22 +33,22 @@ jobs:
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          doppler run -p 20206205tech -c prd -- uv run python step_download_zip.py
+          doppler run -p 20206205tech -c prod -- uv run python step_download_zip.py
 
       - name: step_extract_json
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          doppler run -p 20206205tech -c prd -- uv run python step_extract_json.py
+          doppler run -p 20206205tech -c prod -- uv run python step_extract_json.py
 
       - name: step_rag_chunking
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          doppler run -p 20206205tech -c prd -- uv run python step_rag_chunking.py
+          doppler run -p 20206205tech -c prod -- uv run python step_rag_chunking.py
 
       - name: step_rag_embedding
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          doppler run -p 20206205tech -c prd -- uv run python step_rag_embedding.py
+          doppler run -p 20206205tech -c prod -- uv run python step_rag_embedding.py
