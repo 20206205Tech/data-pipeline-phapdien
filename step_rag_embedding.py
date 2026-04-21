@@ -31,8 +31,8 @@ def main():
             service, local_path, drive_folder_id, file_name, "application/json"
         )
 
-        if not is_changed:
-            continue
+        # if not is_changed:
+        #     continue
 
         logger.info(f"🚀 Đang nạp mới Vector cho: {file_name}")
 
