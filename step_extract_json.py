@@ -56,7 +56,7 @@ def main():
         logger.error(f"❌ Không tìm thấy {FILE_JS_NAME}.")
         return
 
-    # 1. Đồng bộ file JS gốc lên Drive (Sử dụng hàm gộp tự động check MD5)
+    # 1. Đồng bộ file JS gốc lên Drive (Backup file nguồn)
     sync_local_file_to_drive(
         service, js_local_path, drive_folder_id, FILE_JS_NAME, "application/javascript"
     )
@@ -64,7 +64,7 @@ def main():
     logger.info("🛠️ Bắt đầu trích xuất các biến dữ liệu từ file JS...")
     extracted_dict = process_js_to_json(js_local_path)
 
-    # 2. Xử lý từng biến và lưu thành các file JSON riêng biệt
+    # 2. Xử lý từng biến và lưu thành các file JSON riêng biệt TẠI LOCAL
     for var_name in REQUIRED_VARS:
         data = extracted_dict.get(var_name, [])
         if not data:
@@ -78,14 +78,7 @@ def main():
         with open(local_json_path, "w", encoding="utf-8") as jf:
             json.dump(data, jf, ensure_ascii=False, indent=4)
 
-        # 3. Đồng bộ các file JSON vừa bóc tách lên Drive (Tự động check MD5)
-        sync_local_file_to_drive(
-            service,
-            local_json_path,
-            drive_folder_id,
-            file_json_name,
-            "application/json",
-        )
+        logger.success(f"✅ Đã trích xuất và lưu file local: {file_json_name}")
 
 
 if __name__ == "__main__":

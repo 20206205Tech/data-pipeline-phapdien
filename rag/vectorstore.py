@@ -1,24 +1,39 @@
-from langchain_postgres import PGVector
-from sqlalchemy import create_engine
+from langchain_qdrant import QdrantVectorStore
+from loguru import logger
+from qdrant_client import QdrantClient
+from qdrant_client.http.models import Distance, VectorParams
 
 import env
 
 from .embedding import embeddings_model
 
-COLLECTION_NAME = "phap_dien_vectors"
-CONNECTION_STRING = env.PHAP_DIEN_VECTOR_DATABASE
-
-# 1. Khởi tạo Engine với cấu hình chống rớt kết nối (Keep-Alive)
-engine = create_engine(
-    CONNECTION_STRING,
-    pool_pre_ping=True,  # QUAN TRỌNG: Ping kiểm tra kết nối trước khi thực thi, nếu rớt sẽ tự kết nối lại
-    pool_recycle=60,  # Tự động làm mới kết nối sau mỗi 60 giây
+# 1. Khởi tạo Qdrant Client với timeout cao hơn (60 giây)
+client = QdrantClient(
+    url=env.QDRANT_URL,
+    api_key=env.QDRANT_API_KEY,
+    timeout=60.0,  # <--- THÊM DÒNG NÀY
 )
 
-# 2. Truyền engine thay vì chuỗi CONNECTION_STRING
-vector_store = PGVector(
-    embeddings=embeddings_model,
-    collection_name=COLLECTION_NAME,
-    connection=engine,
-    use_jsonb=True,
+collection_name = env.QDRANT_COLLECTION_NAME
+
+# 2. Kiểm tra và tự động tạo Collection nếu chưa tồn tại
+try:
+    if not client.collection_exists(collection_name=collection_name):
+        logger.info(f"Đang tạo mới Qdrant collection: {collection_name}")
+        # keepitreal/vietnamese-sbert output vector size = 768
+        client.create_collection(
+            collection_name=collection_name,
+            vectors_config=VectorParams(size=768, distance=Distance.COSINE),
+        )
+        logger.info("✅ Tạo Qdrant collection thành công!")
+    else:
+        logger.info(f"✅ Qdrant collection '{collection_name}' đã sẵn sàng.")
+except Exception as e:
+    logger.error(f"❌ Lỗi khi kiểm tra/tạo Qdrant collection: {e}")
+
+# 3. Khởi tạo Vector Store
+vector_store = QdrantVectorStore(
+    client=client,
+    collection_name=collection_name,
+    embedding=embeddings_model,
 )

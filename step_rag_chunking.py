@@ -137,7 +137,7 @@ def main():
     html_files = [f for f in os.listdir(PATH_INPUT_HTML) if f.endswith(".html")]
 
     if env.ENVIRONMENT == "development":
-        LIMIT = 50
+        LIMIT = 10
         logger.warning(f"🛠️ Chế độ Development: Chỉ xử lý tối đa {LIMIT} file.")
         html_files = html_files[:LIMIT]
 

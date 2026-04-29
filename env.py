@@ -31,26 +31,31 @@ GOOGLE_DRIVE_TOKEN = env.str("GOOGLE_DRIVE_TOKEN")
 GOOGLE_DRIVE_FOLDER_ID_DATA_PIPELINE_PHAP_DIEN = env.str(
     "GOOGLE_DRIVE_FOLDER_ID_DATA_PIPELINE_PHAP_DIEN"
 )
+GOOGLE_DRIVE_FOLDER_ID = GOOGLE_DRIVE_FOLDER_ID_DATA_PIPELINE_PHAP_DIEN
 
 
 DATA_PIPELINE_PHAP_DIEN_DATABASE_URL = env.str("DATA_PIPELINE_PHAP_DIEN_DATABASE_URL")
+DATABASE_URL = DATA_PIPELINE_PHAP_DIEN_DATABASE_URL
 
 
 # if ENVIRONMENT == "development":
-#     DATA_PIPELINE_PHAP_DIEN_DATABASE_URL = (
+#     DATABASE_URL = (
 #         "postgresql://postgres:postgres@localhost:5432/postgres"
 #     )
 
 
-PHAP_DIEN_VECTOR_DATABASE = DATA_PIPELINE_PHAP_DIEN_DATABASE_URL
-DESTINATION__POSTGRES__CREDENTIALS = DATA_PIPELINE_PHAP_DIEN_DATABASE_URL.replace(
-    "-pooler", ""
-)
+PHAP_DIEN_VECTOR_DATABASE = DATABASE_URL
+DESTINATION__POSTGRES__CREDENTIALS = DATABASE_URL.replace("-pooler", "")
 os.environ["DESTINATION__POSTGRES__CREDENTIALS"] = DESTINATION__POSTGRES__CREDENTIALS
 
 
 URL_SOURCE = "https://phapdien.moj.gov.vn/TraCuuPhapDien/Files/BoPhapDienDienTu.zip"
-# if ENVIRONMENT == "development":
-#     URL_SOURCE = (
-#         "https://github.com/20206205Tech/infra-by-terraform/archive/refs/heads/main.zip"
-#     )
+
+
+QDRANT_URL = env.str("QDRANT_URL")
+QDRANT_API_KEY = env.str("QDRANT_API_KEY")
+QDRANT_COLLECTION_NAME = (
+    "dev_phap_dien_vectors"
+    if ENVIRONMENT == "development"
+    else "prod_phap_dien_vectors"
+)

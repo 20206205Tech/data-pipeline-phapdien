@@ -33,7 +33,7 @@ class ConfigByPath:
                 self._drive_folder_id = get_or_create_drive_folder(
                     service,
                     self.NAME,
-                    env.GOOGLE_DRIVE_FOLDER_ID_DATA_PIPELINE_PHAP_DIEN,
+                    env.GOOGLE_DRIVE_FOLDER_ID,
                 )
             except Exception as e:
                 logger.error(f"Lỗi khi kết nối Google Drive: {e}")

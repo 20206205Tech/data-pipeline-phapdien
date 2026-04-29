@@ -1,12 +1,12 @@
 import torch
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_postgres import PGVector
+from langchain_qdrant import QdrantVectorStore
 from loguru import logger
+from qdrant_client import QdrantClient
 
 import env
 
-COLLECTION_NAME = "phap_dien_vectors"
-CONNECTION_STRING = env.PHAP_DIEN_VECTOR_DATABASE
+COLLECTION_NAME = env.QDRANT_COLLECTION_NAME
 
 
 def get_device():
@@ -27,20 +27,23 @@ embeddings = HuggingFaceEmbeddings(
     encode_kwargs={"normalize_embeddings": True},
 )
 
-logger.info("🔌 Đang kết nối tới Vector Database...")
-vector_store = PGVector(
-    embeddings=embeddings,
+logger.info("🔌 Đang kết nối tới Qdrant Vector Database...")
+client = QdrantClient(
+    url=env.QDRANT_URL,
+    api_key=env.QDRANT_API_KEY,
+)
+
+vector_store = QdrantVectorStore(
+    client=client,
     collection_name=COLLECTION_NAME,
-    connection=CONNECTION_STRING,
-    use_jsonb=True,
+    embedding=embeddings,
 )
 
 
 def test_search(query_text):
     logger.info(f"🔍 Đang tìm kiếm: '{query_text}'")
 
-    # similarity_search_with_score trả về list các tuple (Document, Score)
-    # Với Langchain PGVector mặc định (Cosine Distance): Càng gần 0 càng tốt
+    # Qdrant trả về tuple (Document, Score). Với Cosine, Score càng gần 1 càng tốt.
     results = vector_store.similarity_search_with_score(query_text, k=3)
 
     if not results:
@@ -52,9 +55,8 @@ def test_search(query_text):
     print("=" * 60)
 
     for i, (doc, score) in enumerate(results, 1):
-        print(f"\n[{i}] Độ khoảng cách (Score): {score:.4f} (Càng nhỏ càng khớp)")
+        print(f"\n[{i}] Độ tương đồng (Score): {score:.4f} (Càng gần 1 càng khớp)")
 
-        # In ra các Metadata xịn mà ta đã lấy từ json
         print(f"🏷️ Chủ đề: {doc.metadata.get('ten_chu_de', 'Không rõ')}")
         print(
             f"📂 Đề mục: {doc.metadata.get('ten_de_muc', 'Không rõ')} (ID: {doc.metadata.get('de_muc_id')})"
@@ -66,7 +68,6 @@ def test_search(query_text):
 
 
 if __name__ == "__main__":
-    # Test thử một vài câu hỏi về pháp luật
     user_queries = [
         "Quy định về thời gian làm việc của người lao động",
         "Thủ tục đăng ký khai sinh cho trẻ em",
