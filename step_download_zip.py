@@ -45,17 +45,25 @@ def main():
     service = get_drive_service()
     drive_folder_id = config_by_path.GOOGLE_DRIVE_FOLDER_ID
 
-    # GỌI HÀM "SUPER FUNCTION" Ở ĐÂY
+    # Kiểm tra đồng bộ file với Google Drive
     is_changed, _ = sync_local_file_to_drive(
         service, PATH_ZIP_LOCAL, drive_folder_id, FILE_NAME, "application/zip"
     )
 
-    # Nếu file ZIP có thay đổi HOẶC chưa từng giải nén -> Tiến hành giải nén
-    if is_changed or not os.path.exists(PATH_EXTRACT_DIR):
-        logger.info("⚡ Đang chuẩn bị dữ liệu local (giải nén)...")
+    # --- GHI TRẠNG THÁI CHO GITHUB ACTIONS ---
+    github_output = os.getenv("GITHUB_OUTPUT")
+    if github_output:
+        with open(github_output, "a") as f:
+            f.write(f"changed={'true' if is_changed else 'false'}\n")
+
+    # --- LOGIC GIẢI NÉN CÓ ĐIỀU KIỆN ---
+    if is_changed:
+        logger.info("⚡ File ZIP có sự thay đổi. Đang tiến hành giải nén dữ liệu...")
         extract_zip(PATH_ZIP_LOCAL, PATH_EXTRACT_DIR)
     else:
-        logger.info("✅ Thư mục giải nén local đã sẵn sàng và file ZIP không đổi.")
+        logger.info(
+            "✅ File ZIP không đổi. Bỏ qua bước giải nén và các step tiếp theo trên GitHub Actions."
+        )
 
 
 if __name__ == "__main__":

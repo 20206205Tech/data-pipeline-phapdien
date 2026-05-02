@@ -29,31 +29,38 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
+      # Bổ sung id để tham chiếu
       - name: step_download_zip
+        id: zip_check
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
           doppler run -p 20206205tech -c prod -- uv run python step_download_zip.py
 
+      # Thêm điều kiện if vào TẤT CẢ các bước bên dưới
       - name: step_extract_json
+        if: steps.zip_check.outputs.changed == 'true'
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
           doppler run -p 20206205tech -c prod -- uv run python step_extract_json.py
 
       - name: step_load_json
+        if: steps.zip_check.outputs.changed == 'true'
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
           doppler run -p 20206205tech -c prod -- uv run python step_load_json.py
 
       - name: step_rag_chunking
+        if: steps.zip_check.outputs.changed == 'true'
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
           doppler run -p 20206205tech -c prod -- uv run python step_rag_chunking.py
 
       - name: step_rag_embedding
+        if: steps.zip_check.outputs.changed == 'true'
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
