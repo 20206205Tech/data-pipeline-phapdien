@@ -78,7 +78,7 @@ def main():
         with open(local_json_path, "w", encoding="utf-8") as jf:
             json.dump(data, jf, ensure_ascii=False, indent=4)
 
-        logger.success(f"✅ Đã trích xuất và lưu file local: {file_json_name}")
+        logger.success(f"Đã trích xuất và lưu file local: {file_json_name}")
 
 
 if __name__ == "__main__":

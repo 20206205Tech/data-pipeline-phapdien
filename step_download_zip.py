@@ -27,7 +27,7 @@ def download_file(url, dest_path):
             if chunk:
                 f.write(chunk)
 
-    logger.success(f"✅ Tải xong: {dest_path}")
+    logger.success(f"Tải xong: {dest_path}")
 
 
 def extract_zip(zip_path, extract_to):
@@ -61,8 +61,8 @@ def main():
         logger.info("⚡ File ZIP có sự thay đổi. Đang tiến hành giải nén dữ liệu...")
         extract_zip(PATH_ZIP_LOCAL, PATH_EXTRACT_DIR)
     else:
-        logger.info(
-            "✅ File ZIP không đổi. Bỏ qua bước giải nén và các step tiếp theo trên GitHub Actions."
+        logger.success(
+            "File ZIP không đổi. Bỏ qua bước giải nén và các step tiếp theo trên GitHub Actions."
         )
 
 
