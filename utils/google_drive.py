@@ -99,16 +99,39 @@ def download_from_drive(service, file_id):
 
 
 def get_drive_file_info(service, folder_id, file_name):
-    """Lấy thông tin file (id, md5Checksum) dựa vào tên và thư mục chứa"""
+    """Lấy thông tin file (id, md5Checksum, description) dựa vào tên và thư mục chứa"""
     query = f"name = '{file_name}' and '{folder_id}' in parents and trashed = false"
     try:
         results = (
-            service.files().list(q=query, fields="files(id, md5Checksum)").execute()
+            service.files()
+            .list(q=query, fields="files(id, md5Checksum, description, size)")
+            .execute()
         )
         files = results.get("files", [])
         return files[0] if files else None
     except Exception as e:
         logger.error(f"Lỗi khi lấy thông tin file {file_name}: {e}")
+        return None
+
+
+def get_latest_file_info_by_prefix(service, folder_id, prefix):
+    """Lấy thông tin file mới nhất dựa vào tiền tố (prefix) và sắp xếp theo tên"""
+    query = f"name contains '{prefix}' and '{folder_id}' in parents and trashed = false"
+    try:
+        results = (
+            service.files()
+            .list(
+                q=query,
+                fields="files(id, name, description, size, createdTime)",
+                orderBy="name desc",
+                pageSize=1,
+            )
+            .execute()
+        )
+        files = results.get("files", [])
+        return files[0] if files else None
+    except Exception as e:
+        logger.error(f"Lỗi khi tìm file mới nhất với prefix '{prefix}': {e}")
         return None
 
 
@@ -135,7 +158,9 @@ def get_drive_hashes_in_folder(service, folder_id):
 # =====================================================================
 
 
-def upsert_file_to_drive(service, local_path, folder_id, file_name, mimetype=None):
+def upsert_file_to_drive(
+    service, local_path, folder_id, file_name, mimetype=None, description=None
+):
     """Cập nhật (Ghi đè) nếu file đã tồn tại, Tạo mới nếu chưa có"""
     if mimetype is None:
         mimetype, _ = mimetypes.guess_type(local_path)
@@ -146,14 +171,19 @@ def upsert_file_to_drive(service, local_path, folder_id, file_name, mimetype=Non
     media = MediaFileUpload(local_path, mimetype=mimetype, resumable=True)
 
     try:
+        file_metadata = {"name": file_name, "parents": [folder_id]}
+        if description:
+            file_metadata["description"] = description
+
         if existing_file:
             file_id = existing_file["id"]
             logger.debug(f"🔄 Đang ghi đè file '{file_name}' (ID: {file_id})")
-            service.files().update(fileId=file_id, media_body=media).execute()
+            service.files().update(
+                fileId=file_id, body=file_metadata, media_body=media
+            ).execute()
             return file_id
         else:
             logger.debug(f"🆕 Đang tạo file mới '{file_name}'")
-            file_metadata = {"name": file_name, "parents": [folder_id]}
             file = (
                 service.files()
                 .create(body=file_metadata, media_body=media, fields="id")
@@ -162,6 +192,33 @@ def upsert_file_to_drive(service, local_path, folder_id, file_name, mimetype=Non
             return file.get("id")
     except Exception as e:
         logger.error(f"❌ Lỗi khi upsert file {file_name}: {e}")
+        return None
+
+
+def upload_file_to_drive_with_metadata(
+    service, local_path, folder_id, file_name, mimetype=None, description=None
+):
+    """Tải file lên Google Drive với metadata đi kèm"""
+    if mimetype is None:
+        mimetype, _ = mimetypes.guess_type(local_path)
+        if mimetype is None:
+            mimetype = "application/octet-stream"
+
+    media = MediaFileUpload(local_path, mimetype=mimetype, resumable=True)
+    file_metadata = {"name": file_name, "parents": [folder_id]}
+    if description:
+        file_metadata["description"] = description
+
+    try:
+        logger.debug(f"🚀 Đang tải file '{file_name}' lên Drive...")
+        file = (
+            service.files()
+            .create(body=file_metadata, media_body=media, fields="id")
+            .execute()
+        )
+        return file.get("id")
+    except Exception as e:
+        logger.error(f"❌ Lỗi khi tải file {file_name} lên Drive: {e}")
         return None
 
 
