@@ -178,8 +178,11 @@ def upsert_file_to_drive(
         if existing_file:
             file_id = existing_file["id"]
             logger.debug(f"🔄 Đang ghi đè file '{file_name}' (ID: {file_id})")
+            # parents field is not directly writable in update requests.
+            update_metadata = file_metadata.copy()
+            update_metadata.pop("parents", None)
             service.files().update(
-                fileId=file_id, body=file_metadata, media_body=media
+                fileId=file_id, body=update_metadata, media_body=media
             ).execute()
             return file_id
         else:
